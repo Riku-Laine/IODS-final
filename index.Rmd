@@ -1,0 +1,4 @@
+
+# IODS final project
+
+Some stuff $$y = \alpha x_1 + \beta x_2 + \epsilon$$

@@ -1,4 +1,31 @@
 
-# IODS final project
+---
+title: "IODS final project"
+author: "Riku Laine (riku.laine@helsinki.fi)"
+output:
+  html_document:
+    theme: yeti
+    toc: true
+    toc_depth: 3
+    fig_caption: true
+    fig_width: 6
+    fig_height: 4
+    code_folding: hide
+---
+
+## Abstract
 
 Some stuff $$y = \alpha x_1 + \beta x_2 + \epsilon$$
+
+```{r Settings, include=FALSE}
+library(knitr)
+opts_chunk$set(message = F)
+opts_chunk$set(warning = F)
+
+```
+
+
+```{r}
+plot(cars)
+```
+

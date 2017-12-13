@@ -37,14 +37,14 @@ an.data <- dplyr::select(learning2014, gender, Age, Attitude, Points)
 # Vectorize the original data set to simplify the following calls.
 attach(learning2014)
 
-an.data <- mutate(an.data, SeekingMeaning      =  mean(D03+D11+D19+D27))
-an.data <- mutate(an.data, RelatingIdeas       =  mean(D07+D14+D22+D30))
-an.data <- mutate(an.data, UseOfEvidence       =  mean(D06+D15+D23+D31))
-an.data <- mutate(an.data, LackOfPurpose       =  mean(SU02+SU10+SU18+SU26))
-an.data <- mutate(an.data, UnrelatedMemorising =  mean(SU05+SU13+SU21+SU29))
-an.data <- mutate(an.data, SyllabusBoundness   =  mean(SU08+SU16+SU24+SU32))
-an.data <- mutate(an.data, OrganizedStudying   =  mean(ST01+ST09+ST17+ST25))
-an.data <- mutate(an.data, TimeManagement      =  mean(ST04+ST12+ST20+ST28))
+an.data <- mutate(an.data, SeekingMeaning      =  (D03+D11+D19+D27)/4)
+an.data <- mutate(an.data, RelatingIdeas       =  (D07+D14+D22+D30)/4)
+an.data <- mutate(an.data, UseOfEvidence       =  (D06+D15+D23+D31)/4)
+an.data <- mutate(an.data, LackOfPurpose       =  (SU02+SU10+SU18+SU26)/4)
+an.data <- mutate(an.data, UnrelatedMemorising =  (SU05+SU13+SU21+SU29)/4)
+an.data <- mutate(an.data, SyllabusBoundness   =  (SU08+SU16+SU24+SU32)/4)
+an.data <- mutate(an.data, OrganizedStudying   =  (ST01+ST09+ST17+ST25)/4)
+an.data <- mutate(an.data, TimeManagement      =  (ST04+ST12+ST20+ST28)/4)
 
 # Remove the above created vectors.
 detach(learning2014)

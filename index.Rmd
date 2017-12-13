@@ -19,6 +19,8 @@ output:
 
 ```{r Settings, include=FALSE}
 library(knitr)
+library(ggplot2)
+library(GGally)
 opts_chunk$set(message = F)
 opts_chunk$set(warning = F)
 
@@ -44,11 +46,15 @@ I hypothesized that the most similar would be the variables which make the final
 
 ### Data processing
 
-The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 remained after I removed the inviduals which had zero points from the final exam. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named the to be quite self explanatory. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale).
+The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 remained after I removed the individuals which had zero points from the final exam. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named the to be quite self explanatory. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale).
 
 ### The data visually
 
+*Visually clear and interesting explorations of the variables of interest in the data, from the point of view of your research question. Include interpretations of the distributions and relationships of the variables. Use captions to draw the reader’s focus on the interesting parts of your tables and graphics.*
 
+```{r}
+ggpairs(learning2014[, -1])
+```
 
 ## Methods
 

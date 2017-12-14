@@ -19,6 +19,7 @@ output:
 library(knitr)
 library(ggplot2)
 library(GGally)
+library(corrplot)
 opts_chunk$set(message = F)
 opts_chunk$set(warning = F)
 opts_chunk$set(out.width = "100%")
@@ -53,10 +54,35 @@ learning2014 <- read.csv("~/GitHub/IODS-final/data/learning2014.csv")
 
 ggpairs(learning2014, mapping = aes(col=Gender, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))+
 	theme(strip.text = element_text(size=6), axis.text = element_text(size=6))+
-	ggtitle("Interactions in Learning2014 data")
+	ggtitle("Figure 1: Interactions in Learning2014 data")
 ```
 
-From the plot matrix above it is visible that 
+From the plot matrix above it is visible that there are some quite strong correlations with some of the variables. For instance the variables of deep learning `OrganizedStudying` and `TimeManagement` have a correlation coefficient of $\rho \approx 0,7$. seeking meaning, use of evidence relating ideas correlate too
+
+distributions of the vairables seem to be quite symmetrical, although age is skewed to the left. little differences in distributions between genders -> attitude is higher for meen -> seen in orevioius studies??, mann-whitney u-test, use of evidence(!) and organized studying too
+
+the students of the course are mostly 20--30 years old 
+
+to see correlations, coorplot
+
+```{r Corrplot}
+corrplot(cor(learning2014[, -1]), type = "lower", diag = T, tl.col='black', tl.srt = 0.1, tl.offset = 1, 
+				 title = "Fig. 2: Correlations of learning2014 data")
+```
+
+Tästä nähdäään, että ryhmittycät kivasti,  todettava kuinka points ja asenteen korrelaatio on `r cor(learning2014$Points, learning2014$Attitude)`.
+
+### Logregiä varten
+
+```{r plotteja}
+par(mfrow=c(1,2))
+plot(learning2014$Attitude, learning2014$Points)
+boxplot(Attitude ~ Gender, data=learning2014)
+plot(learning2014$UnrelatedMemorising, learning2014$Points)
+plot(learning2014$Attitude, learning2014$Points)
+```
+
+
 
 ## Methods
 

@@ -10,8 +10,6 @@ output:
     toc: true
     toc_depth: 3
     fig_caption: true
-    fig_width: 6
-    fig_height: 4
     code_folding: hide
 ---
 
@@ -23,38 +21,42 @@ library(ggplot2)
 library(GGally)
 opts_chunk$set(message = F)
 opts_chunk$set(warning = F)
-
+opts_chunk$set(out.width = "100%")
 ```
 
 ## Abstract
 
 Some stuff $$y = \alpha x_1 + \beta x_2 + \epsilon$$, which happens to be regression function for linear regression.
 
-```{r Data import}
-learning2014 <- read.csv("~/GitHub/IODS-final/data/learning2014.csv")
-```
-
 ## Research question and hypothesis
 
-I was interested in finding out what factors of people's learning are the most connected. Could boundness in the course syllabus be somehow in connection with student's time managing? I concluded that the principal component analysis (PCA) was the most fitting tool to answer this question. In addition, I performed logistic regression on some of the variables to find out which of the components associate to the final score the most.
+I was interested in finding out what factors of people's learning are the most connected. Could boundness in the course syllabus be somehow in connection with student's time managing? I concluded that the principal component analysis (PCA) was the most fitting tool to answer this question. In addition, I performed logistic regression on some of the variables to find out which of the components affect the final score the most.
 
 I hypothesized that the most similar would be the variables which make the final three analysis variables Deep_adj, Surf_adj and Stra_adj. For the logistic regression I presumed that seeking meaning, unrelated memorizing and attitude would affect the final score the most. 
 
 ## Data description
 
-[The data](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt) was acquired from a study made by Kimmo Vehkalahti. The questionnaire was held in Fall 2014 for the participants of the course introduction to Society Statistics (Johdatus yhteiskuntatilastotieteeseen) and it was made possible by the Teachers' Academy. The questionnaire itself had questions regarding for instance the students' motivation, strategies in studying and general interest in statistics.
+[The data](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt) was acquired from a study made by Kimmo Vehkalahti. The study included a questionnaire which was held in Fall 2014 for the participants of an introductory course to statistics (Johdatus yhteiskuntatilastotieteeseen) and it was funded by the Teachers' Academy. The questionnaire itself had questions regarding for instance the students' motivation, strategies in studying and general interest in statistics.
 
 ### Data processing
 
-The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 remained after I removed the individuals which had zero points from the final exam. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named the to be quite self explanatory. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale).
+The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 remained after I removed the individuals which had zero points from the final exam from not attending it. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named them to be quite self explanatory. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale).
 
 ### The data visually
 
 *Visually clear and interesting explorations of the variables of interest in the data, from the point of view of your research question. Include interpretations of the distributions and relationships of the variables. Use captions to draw the reader’s focus on the interesting parts of your tables and graphics.*
 
-```{r}
-ggpairs(learning2014[, -1])
+Tarkastellaan data visuaalisesti, tehdään pariplottaus, kuten aikaisemmin kurssilla, jotta saadaan pääpiirteet datan sisältä. Syvennytään senjälkeen tarkemmin kunkin analyysin (logreg ja PCA) kannalta mielenkiintoisiin kohteisiin.
+
+```{r Plots}
+learning2014 <- read.csv("~/GitHub/IODS-final/data/learning2014.csv")
+
+ggpairs(learning2014, mapping = aes(col=Gender, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))+
+	theme(strip.text = element_text(size=6), axis.text = element_text(size=6))+
+	ggtitle("Interactions in Learning2014 data")
 ```
+
+From the plot matrix above it is visible that 
 
 ## Methods
 

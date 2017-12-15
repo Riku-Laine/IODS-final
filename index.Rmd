@@ -70,7 +70,7 @@ From figure 2 it can be concluded that our variables correlate the most with the
 
 ### Logregiä varten plotteja joissa ei ole points toisena Gender differnces
 
-Katsotaan lyhyesti läpi sukupuolten väliset erot log reg varten. fig 1 perusteella mielenkiintoisimmat ovat `OrganizedStudying` ja `Attitude`. 
+Katsotaan lyhye sti läpi sukupuolten väliset erot log reg varten. fig 1 perusteella mielenkiintoisimmat ovat `OrganizedStudying` ja `Attitude`. 
 
 ```{r plotteja, fig.asp=.4}
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {

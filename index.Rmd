@@ -41,15 +41,15 @@ I hypothesized that the most similar would be the variables which make the final
 
 ### Data processing
 
-The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 remained after I removed the individuals which had zero points from the final exam from not attending it. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named them to be quite self explanatory. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale).
+The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 remained from the exclusion of individuals who had zero points from the final exam from not attending it. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named them to be self explanatory. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale).
 
 ### The data visually
 
 *Visually clear and interesting explorations of the variables of interest in the data, from the point of view of your research question. Include interpretations of the distributions and relationships of the variables. Use captions to draw the reader’s focus on the interesting parts of your tables and graphics.*
 
-Tarkastellaan data visuaalisesti, tehdään pariplottaus, kuten aikaisemmin kurssilla, jotta saadaan pääpiirteet datan sisältä. Syvennytään senjälkeen tarkemmin kunkin analyysin (logreg ja PCA) kannalta mielenkiintoisiin kohteisiin.
+First I explored the data with a paired plot matrix to see possible trends and correlations between the variables of the data. Afterwards, I deepened my analysis with some variables of interest revealed by the plot matrix.
 
-```{r Plots}
+```{r Plots, cache=TRUE}
 learning2014 <- read.csv("~/GitHub/IODS-final/data/learning2014.csv")
 
 ggpairs(learning2014, mapping = aes(col=Gender, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))+
@@ -57,29 +57,66 @@ ggpairs(learning2014, mapping = aes(col=Gender, alpha=0.3), lower = list(combo =
 	ggtitle("Figure 1: Interactions in Learning2014 data")
 ```
 
-From the plot matrix above it is visible that there are some quite strong correlations with some of the variables. For instance the variables of deep learning `OrganizedStudying` and `TimeManagement` have a correlation coefficient of $\rho \approx 0,7$. seeking meaning, use of evidence relating ideas correlate too
+Distributions of the variables seem to be quite symmetrical, although most of the respondents are students and therefore it is not surprising that the inter-quartile range of age falls between 21 and 27 years. There are only minor differences in between the genders, males seem to have a  better attitude towards statistics as females appear to be more organized in their studies. Mens' better attitude towards mathematics have been shown in previous studies.
 
-distributions of the vairables seem to be quite symmetrical, although age is skewed to the left. little differences in distributions between genders -> attitude is higher for meen -> seen in orevioius studies??, mann-whitney u-test, use of evidence(!) and organized studying too
+From figure 1 above it is visible that there are some quite strong correlations with some of the variables. For instance the variables of deep learning `OrganizedStudying` and `TimeManagement` have a correlation coefficient of $\rho \approx 0,7$ as the attitude of a student correlates with their points with a coefficient $\rho \approx 0,43$. Correlations are analyzed more thoroughly below figure 2.
 
-the students of the course are mostly 20--30 years old 
-
-to see correlations, coorplot
-
-```{r Corrplot}
+```{r Corrplot, out.height="80%", out.width="80%"}
 corrplot(cor(learning2014[, -1]), type = "lower", diag = T, tl.col='black', tl.srt = 0.1, tl.offset = 1, 
 				 title = "Fig. 2: Correlations of learning2014 data")
 ```
 
-Tästä nähdäään, että ryhmittycät kivasti,  todettava kuinka points ja asenteen korrelaatio on `r cor(learning2014$Points, learning2014$Attitude)`.
+From figure 2 it can be concluded that our variables correlate the most with the variables they comprise the original variables (Deep_adj) with. Also notable is the correlation with the students' attitude and points from the final exam being approximately `r round(cor(learning2014$Points, learning2014$Attitude), digits=2)`. This means better attitude associates with better performance in the exam. 
 
-### Logregiä varten
+### Logregiä varten plotteja joissa ei ole points toisena Gender differnces
 
-```{r plotteja}
-par(mfrow=c(1,2))
-plot(learning2014$Attitude, learning2014$Points)
-boxplot(Attitude ~ Gender, data=learning2014)
-plot(learning2014$UnrelatedMemorising, learning2014$Points)
-plot(learning2014$Attitude, learning2014$Points)
+Katsotaan lyhyesti läpi sukupuolten väliset erot log reg varten. fig 1 perusteella mielenkiintoisimmat ovat `OrganizedStudying` ja `Attitude`. 
+
+```{r plotteja, fig.asp=.4}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+p1 <- ggplot(learning2014, aes(x=Gender, y=Attitude, fill=Gender))+
+	geom_boxplot()+
+	geom_jitter(position=position_jitter(0.1), alpha=.4)
+
+p2 <- ggplot(learning2014, aes(x=Gender, y=OrganizedStudying, fill=Gender))+
+	geom_boxplot()+
+	geom_jitter(position=position_jitter(0.1), alpha=.4)
+
+multiplot(p1, p2, cols=2)
 ```
 
 

@@ -23,6 +23,144 @@ library(corrplot)
 opts_chunk$set(message = F)
 opts_chunk$set(warning = F)
 opts_chunk$set(out.width = "100%")
+
+mycor <- function(data, mapping, alignPercent = 0.6, method = "pearson", 
+    use = "complete.obs", corAlignPercent = NULL, corMethod = NULL, 
+    corUse = NULL, sgnf=3, ...) {
+    if (!is.null(corAlignPercent)) {
+        stop("'corAlignPercent' is deprecated.  Please use argument 'alignPercent'")
+    }
+    if (!is.null(corMethod)) {
+        stop("'corMethod' is deprecated.  Please use argument 'method'")
+    }
+    if (!is.null(corUse)) {
+        stop("'corUse' is deprecated.  Please use argument 'use'")
+    }
+    useOptions <- c("all.obs", "complete.obs", "pairwise.complete.obs", 
+        "everything", "na.or.complete")
+    use <- pmatch(use, useOptions)
+    if (is.na(use)) {
+        warning("correlation 'use' not found.  Using default value of 'all.obs'")
+        use <- useOptions[1]
+    } else {
+        use <- useOptions[use]
+    }
+    cor_fn <- function(x, y) {
+        cor(x, y, method = method, use = use)
+    }
+    xCol <- deparse(mapping$x)
+    yCol <- deparse(mapping$y)
+    if (GGally:::is_date(data[[xCol]]) || GGally:::is_date(data[[yCol]])) {
+        if (!identical(class(data), "data.frame")) {
+            data <- fix_data(data)
+        }
+        for (col in c(xCol, yCol)) {
+            if (GGally:::is_date(data[[col]])) {
+                data[[col]] <- as.numeric(data[[col]])
+            }
+        }
+    }
+    if (is.numeric(GGally:::eval_data_col(data, mapping$colour))) {
+        stop("ggally_cor: mapping color column must be categorical, not numeric")
+    }
+    colorCol <- deparse(mapping$colour)
+    singleColorCol <- ifelse(is.null(colorCol), NULL, paste(colorCol, 
+        collapse = ""))
+    if (use %in% c("complete.obs", "pairwise.complete.obs", "na.or.complete")) {
+        if (length(colorCol) > 0) {
+            if (singleColorCol %in% colnames(data)) {
+                rows <- complete.cases(data[c(xCol, yCol, colorCol)])
+            } else {
+                rows <- complete.cases(data[c(xCol, yCol)])
+            }
+        } else {
+            rows <- complete.cases(data[c(xCol, yCol)])
+        }
+        if (any(!rows)) {
+            total <- sum(!rows)
+            if (total > 1) {
+                warning("Removed ", total, " rows containing missing values")
+            } else if (total == 1) {
+                warning("Removing 1 row that contained a missing value")
+            }
+        }
+        data <- data[rows, ]
+    }
+    xVal <- data[[xCol]]
+    yVal <- data[[yCol]]
+    if (length(names(mapping)) > 0) {
+        for (i in length(names(mapping)):1) {
+            tmp_map_val <- deparse(mapping[names(mapping)[i]][[1]])
+            if (tmp_map_val[length(tmp_map_val)] %in% colnames(data)) 
+                mapping[[names(mapping)[i]]] <- NULL
+            if (length(names(mapping)) < 1) {
+                mapping <- NULL
+                break
+            }
+        }
+    }
+    if (length(colorCol) < 1) {
+        colorCol <- "ggally_NO_EXIST"
+    }
+    if ((singleColorCol != "ggally_NO_EXIST") && (singleColorCol %in% 
+        colnames(data))) {
+        cord <- plyr::ddply(data, c(colorCol), function(x) {
+            cor_fn(x[[xCol]], x[[yCol]])
+        })
+        colnames(cord)[2] <- "ggally_cor"
+        cord$ggally_cor <- signif(as.numeric(cord$ggally_cor), 
+            sgnf)
+        lev <- levels(data[[colorCol]])
+        ord <- rep(-1, nrow(cord))
+        for (i in 1:nrow(cord)) {
+            for (j in seq_along(lev)) {
+                if (identical(as.character(cord[i, colorCol]), 
+                  as.character(lev[j]))) {
+                  ord[i] <- j
+                }
+            }
+        }
+        cord <- cord[order(ord[ord >= 0]), ]
+        cord$label <- GGally:::str_c(cord[[colorCol]], ": ", cord$ggally_cor)
+        xmin <- min(xVal, na.rm = TRUE)
+        xmax <- max(xVal, na.rm = TRUE)
+        xrange <- c(xmin - 0.01 * (xmax - xmin), xmax + 0.01 * 
+            (xmax - xmin))
+        ymin <- min(yVal, na.rm = TRUE)
+        ymax <- max(yVal, na.rm = TRUE)
+        yrange <- c(ymin - 0.01 * (ymax - ymin), ymax + 0.01 * 
+            (ymax - ymin))
+        p <- ggally_text(label = GGally:::str_c("Corr: ", signif(cor_fn(xVal, 
+            yVal), sgnf)), mapping = mapping, xP = 0.5, yP = 0.9, 
+            xrange = xrange, yrange = yrange, color = "black", 
+            ...) + theme(legend.position = "none")
+        xPos <- rep(alignPercent, nrow(cord)) * diff(xrange) + 
+            min(xrange, na.rm = TRUE)
+        yPos <- seq(from = 0.9, to = 0.2, length.out = nrow(cord) + 
+            1)
+        yPos <- yPos * diff(yrange) + min(yrange, na.rm = TRUE)
+        yPos <- yPos[-1]
+        cordf <- data.frame(xPos = xPos, yPos = yPos, labelp = cord$label)
+        cordf$labelp <- factor(cordf$labelp, levels = cordf$labelp)
+        p <- p + geom_text(data = cordf, aes(x = xPos, y = yPos, 
+            label = labelp, color = labelp), hjust = 1, ...)
+        p
+    }  else {
+        xmin <- min(xVal, na.rm = TRUE)
+        xmax <- max(xVal, na.rm = TRUE)
+        xrange <- c(xmin - 0.01 * (xmax - xmin), xmax + 0.01 * 
+            (xmax - xmin))
+        ymin <- min(yVal, na.rm = TRUE)
+        ymax <- max(yVal, na.rm = TRUE)
+        yrange <- c(ymin - 0.01 * (ymax - ymin), ymax + 0.01 * 
+            (ymax - ymin))
+        p <- ggally_text(label = paste("Corr:\n", signif(cor_fn(xVal, 
+            yVal), sgnf), sep = "", collapse = ""), mapping, xP = 0.5, 
+            yP = 0.5, xrange = xrange, yrange = yrange, ...) + 
+            theme(legend.position = "none")
+        p
+    }
+}
 ```
 
 ## Abstract
@@ -31,9 +169,9 @@ Some stuff $$y = \alpha x_1 + \beta x_2 + \epsilon$$, which happens to be regres
 
 ## Research question and hypothesis
 
-I was interested in finding out what factors of people's learning are the most connected. Could boundness in the course syllabus be somehow in connection with student's time managing? I concluded that the principal component analysis (PCA) was the most fitting tool to answer this question. In addition, I performed logistic regression on some of the variables to find out which of the components affect the final score the most.
+I was interested in finding out what factors of people's learning are the most connected to their final score. Could boundness in the course syllabus be somehow in connection with a low score? I concluded that logistic regression was the most fitting tool to answer this question.
 
-I hypothesized that the most similar would be the variables which make the final three analysis variables Deep_adj, Surf_adj and Stra_adj. For the logistic regression I presumed that seeking meaning, unrelated memorizing and attitude would affect the final score the most. 
+I hypothesized that -- along with attitude -- `RelatingIdeas` would affect the final score as it represents how much does a atudent ponder the things taught in their free time. And when one revises things learned it deepens their learning, as "repetitio est mater studiorum".
 
 ## Data description
 
@@ -49,15 +187,18 @@ The original data set consisted of 183 observations, but after [processing it](h
 
 First I explored the data with a paired plot matrix to see possible trends and correlations between the variables of the data. Afterwards, I deepened my analysis with some variables of interest revealed by the plot matrix.
 
-```{r Plots, cache=TRUE}
+```{r Plots}
 learning2014 <- read.csv("~/GitHub/IODS-final/data/learning2014.csv")
 
-ggpairs(learning2014, mapping = aes(col=Gender, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))+
-	theme(strip.text = element_text(size=6), axis.text = element_text(size=6))+
+ggpairs(learning2014, mapping = aes(col=Gender, alpha=0.1), lower = list(combo = wrap("facethist", bins = 20)),  upper = list(continuous = wrap(size = 1.7, mycor, sgnf=2)))+
+	theme(strip.text = element_text(size=6), 
+				strip.text.y = element_text(angle=0), 
+				axis.text = element_text(size=6), 
+				strip.text.x = element_text(angle=45))+
 	ggtitle("Figure 1: Interactions in Learning2014 data")
 ```
 
-Distributions of the variables seem to be quite symmetrical, although most of the respondents are students and therefore it is not surprising that the inter-quartile range of age falls between 21 and 27 years. There are only minor differences in between the genders, males seem to have a  better attitude towards statistics as females appear to be more organized in their studies. Mens' better attitude towards mathematics have been shown in previous studies.
+Distributions of the variables seem to be quite symmetrical, although most of the respondents are students and therefore it is not surprising that the inter-quartile range of age falls between 21 and 27 years. There are only minor differences between the genders, males seem to have a better attitude towards statistics as females appear to be more organized in their studies. Males' better attitude towards mathematics have been shown in previous studies.
 
 From figure 1 above it is visible that there are some quite strong correlations with some of the variables. For instance the variables of deep learning `OrganizedStudying` and `TimeManagement` have a correlation coefficient of $\rho \approx 0,7$ as the attitude of a student correlates with their points with a coefficient $\rho \approx 0,43$. Correlations are analyzed more thoroughly below figure 2.
 
@@ -66,11 +207,11 @@ corrplot(cor(learning2014[, -1]), type = "lower", diag = T, tl.col='black', tl.s
 				 title = "Fig. 2: Correlations of learning2014 data")
 ```
 
-From figure 2 it can be concluded that our variables correlate the most with the variables they comprise the original variables (Deep_adj) with. Also notable is the correlation with the students' attitude and points from the final exam being approximately `r round(cor(learning2014$Points, learning2014$Attitude), digits=2)`. This means better attitude associates with better performance in the exam. 
+From figure 2 it can be asserted that our variables correlate the most with the variables they comprise the original variables (such as Deep_adj) with. Also notable is the correlation with the students' attitude and points from the final exam being approximately `r round(cor(learning2014$Points, learning2014$Attitude), digits=2)`. This means better attitude associates with better performance in the exam. There are practically no other correlations that could cause collinearity in our regression model as all the others have an absolute value approximately smaller than 0.3.
 
-### Logregiä varten plotteja joissa ei ole points toisena Gender differnces
+### Gender differences in level of organization in studying and attitude toward statistics
 
-Katsotaan lyhyesti läpi sukupuolten väliset erot log reg varten. fig 1 perusteella mielenkiintoisimmat ovat `OrganizedStudying` ja `Attitude`. 
+In figure 1 there were some gender differences noted. Let's look briefly into them. First, let us construct boxplots of those variables and do a quick statistical test to assert the observed differences.
 
 ```{r plotteja, fig.asp=.4}
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
@@ -110,19 +251,28 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 p1 <- ggplot(learning2014, aes(x=Gender, y=Attitude, fill=Gender))+
 	geom_boxplot()+
-	geom_jitter(position=position_jitter(0.1), alpha=.4)
+	geom_jitter(position=position_jitter(0.1), alpha=.4)+ggtitle("Gender differences", subtitle = "Fig. 3 Attitude")
 
 p2 <- ggplot(learning2014, aes(x=Gender, y=OrganizedStudying, fill=Gender))+
 	geom_boxplot()+
-	geom_jitter(position=position_jitter(0.1), alpha=.4)
+	geom_jitter(position=position_jitter(0.1), alpha=.4)+ggtitle("", subtitle = "Fig. 4 OrganizedStudying")
 
 multiplot(p1, p2, cols=2)
 ```
 
-
+It can be seen that men have higher attitude points, which is supported by Kruskal-Wallis test ($p \approx 1.1 \cdot 10^{-4}$). Females seem to be more organized ($p \approx 7.1 \cdot 10^{-3}$) in a statistically significant quantity. These differences have been noted in previous studies **JATKA**
 
 ## Methods
 
+### Logistic regression
+
+As [NCBI](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1065119/) puts it, logistic regression, "is a method for modelling the dependence of a binary response variable on one or more explanatory variables." In our case we have the binary response variable of points gotten in the final exam; if one has a score higher than **PÄÄTÄÄTTÄTÄ** they will have 1, as ones with a lower score get a zero. The regression model attemps to estimate the dependant variablein the best fashion. blaaa
+
+### Other statistical tests used
+
+#### Kruskal-Wallis test
+
+Kruska-Wallis is a non-parametric alternative for the t-test. In other words, we do not have the assume that our variables are either homoscedastic -- to have the same variance -- or normally distributed.
 
 
 ## Results

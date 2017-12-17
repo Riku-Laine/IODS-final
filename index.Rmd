@@ -3,7 +3,7 @@
 title: "IODS final project"
 author:
   name: Riku Laine
-  affiliation: riku.laine@helsinki.fi
+  affiliation: riku.laine[at]helsinki.fi
 output:
   html_document:
     theme: yeti
@@ -161,6 +161,42 @@ mycor <- function(data, mapping, alignPercent = 0.6, method = "pearson",
         p
     }
 }
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
 ```
 
 ## Abstract
@@ -171,7 +207,7 @@ Some stuff $$y = \alpha x_1 + \beta x_2 + \epsilon$$, which happens to be regres
 
 I was interested in finding out what factors of people's learning are the most connected to their final score. Could boundness in the course syllabus be somehow in connection with a low score? I concluded that logistic regression was the most fitting tool to answer this question.
 
-I hypothesized that -- along with attitude -- `RelatingIdeas` would affect the final score as it represents how much does a atudent ponder the things taught in their free time. And when one revises things learned it deepens their learning, as "repetitio est mater studiorum".
+I hypothesized that -- along with attitude -- `RelatingIdeas` would affect the final score as it represents how much does a student ponder the things taught in their free time. And when one revises things learned it deepens their learning, as "repetitio est mater studiorum".
 
 ## Data description
 
@@ -211,44 +247,9 @@ From figure 2 it can be asserted that our variables correlate the most with the 
 
 ### Gender differences in level of organization in studying and attitude toward statistics
 
-In figure 1 there were some gender differences noted. Let's look briefly into them. First, let us construct boxplots of those variables and do a quick statistical test to assert the observed differences.
+In figure 1 there were some gender differences noted. Let's look briefly into them. First, let us construct box plots of those variables and do a quick statistical test to assert the observed differences.
 
 ```{r plotteja, fig.asp=.4}
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-  library(grid)
-
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-
-  numPlots = length(plots)
-
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                    ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-
- if (numPlots==1) {
-    print(plots[[1]])
-
-  } else {
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
-    }
-  }
-}
 p1 <- ggplot(learning2014, aes(x=Gender, y=Attitude, fill=Gender))+
 	geom_boxplot()+
 	geom_jitter(position=position_jitter(0.1), alpha=.4)+ggtitle("Gender differences", subtitle = "Fig. 3 Attitude")
@@ -260,19 +261,28 @@ p2 <- ggplot(learning2014, aes(x=Gender, y=OrganizedStudying, fill=Gender))+
 multiplot(p1, p2, cols=2)
 ```
 
-It can be seen that men have higher attitude points, which is supported by Kruskal-Wallis test ($p \approx 1.1 \cdot 10^{-4}$). Females seem to be more organized ($p \approx 7.1 \cdot 10^{-3}$) in a statistically significant quantity. These differences have been noted in previous studies **JATKA**
+It can be seen that men have higher attitude points, which is supported by Mann-Whitney U-test ($p \approx 1.1 \cdot 10^{-4}$). Females seem to be more organized (Mann-Whitney U, $p \approx 7.1 \cdot 10^{-3}$) in a statistically significant quantity. These differences have been noted in previous studies **JATKA**
 
 ## Methods
 
 ### Logistic regression
 
-As [NCBI](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1065119/) puts it, logistic regression, "is a method for modelling the dependence of a binary response variable on one or more explanatory variables." In our case we have the binary response variable of points gotten in the final exam; if one has a score higher than **PÄÄTÄÄTTÄTÄ** they will have 1, as ones with a lower score get a zero. The regression model attemps to estimate the dependant variablein the best fashion. blaaa
+As [NCBI](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1065119/) puts it, logistic regression, "is a method for modelling the dependence of a binary response variable on one or more explanatory variables." In our case we have the binary response variable of points gotten in the final exam; if one has a score higher than **PÄÄTÄÄTTÄTÄ** they will have 1, as ones with a lower score get a zero. The regression model attempts to estimate the dependent variable in the best fashion. 
+
+Log odds 
 
 ### Other statistical tests used
 
-#### Kruskal-Wallis test
+#### Mann-Whitney U-test
 
-Kruska-Wallis is a non-parametric alternative for the t-test. In other words, we do not have the assume that our variables are either homoscedastic -- to have the same variance -- or normally distributed.
+Mann-Whitney U-test is a non-parametric alternative for the t-test. In other words, we do not have the assume that our variables are normally distributed. The test allows us to test "the null hypothesis that it is equally likely that a randomly selected value from one sample will be less than or greater than a randomly selected value from a second sample" ([Wikipedia](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test)). Fig. 5 shows that the distributions are quite normal in `Attitude` but it has been shown that Mann-Whitney doesn't lose its statistical power compared to the t-test in such a quantity it would be beneficial to risk on the normality assumption.
+
+```{r}
+plot(density(learning2014$Attitude[learning2014$Gender=='M']), col='blue', main="Figure 5: Distribution of Attitude by gender", xlab="Attitude points")
+lines(density(learning2014$Attitude[learning2014$Gender=='F']), col='red')
+legend("topright", col=c("red", "blue"), legend = c('Female', 'Male'), lty=1)
+```
+
 
 
 ## Results

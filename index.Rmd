@@ -6,14 +6,16 @@ author:
   affiliation: riku.laine[at]helsinki.fi
 output:
   html_document:
-    theme: yeti
+    theme: flatly
     toc: true
+    toc_float:
+      collapsed: false
     toc_depth: 3
     fig_caption: true
     code_folding: hide
 ---
 
-<center> <h1>PROJECT TITLE</h1> </center>
+# Modelling exam scores with logistic regression
 
 ```{r Settings, include=FALSE}
 library(knitr)
@@ -202,34 +204,36 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 ## Abstract
 
-Some stuff $$y = \alpha x_1 + \beta x_2 + \epsilon$$, which happens to be regression function for linear regression.
+In this report I have analyzed the learning2014 data constructed by Kimmo Vehkalahti. Initially I thought that one's attitude and willingness to connect the learned to the previously experienced would be the key factors in good exam performance but I was partially wrong. I seems that attitude makes the greatest impact and time managing skills the second greatest. Connecting the learned to one's previous experience seems to have negative effects.
 
 ## Research question and hypothesis
 
-I was interested in finding out what factors of people's learning are the most connected to their final score. Could boundness in the course syllabus be somehow in connection with a low score? I concluded that logistic regression was the most fitting tool to answer this question.
+I was interested in finding out what factors of people's learning are the most connected to their final score. Could boundness in the course syllabus be somehow in connection with a low score or could good planning be the key to success? I concluded that logistic regression was the most fitting tool to answer this question.
 
-I hypothesized that along with attitude `RelatingIdeas` (relating ideas to one's previous knowledge and experience) would affect the final score as it represents how much does a student ponder the things taught in their free time. And when one revises things learned it deepens their learning, as "repetitio est mater studiorum".
+I hypothesized that along with attitude, `RelatingIdeas` (relating ideas to one's previous knowledge and experience) would affect the final score as it represents how much does a student ponder the things taught in class. And when one revises things learned it deepens their learning, as "repetitio est mater studiorum".
 
 ## Data description
 
 [The data](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt) was acquired from a study made by Kimmo Vehkalahti. The study included a questionnaire which was held in Fall 2014 for the participants of an introductory course to statistics (Johdatus yhteiskuntatilastotieteeseen) and it was funded by the Teachers' Academy. The questionnaire itself had questions regarding for instance the students' motivation, strategies in studying and general interest in statistics.
 
-The variables -- apart from gender and age -- describe the following attributes of an individual (synthesized based on data from [here](http://www.psy.gla.ac.uk/~steve/dands/dandstable.html)^1^ and [here](http://www.etl.tla.ed.ac.uk/questionnaires/scoringkey.pdf)^2^:
+The variables -- apart from gender and age -- describe the following attributes of an individual (synthesized based on data from [here](http://www.psy.gla.ac.uk/~steve/dands/dandstable.html)^1^ and [here](http://www.etl.tla.ed.ac.uk/questionnaires/scoringkey.pdf)^2^):
 
 * `Attitude` -- Respondent's general attitude towards studying statistics
 * `SeekingMeaning` -- Intention to understand for oneself^2^
-* `RelatingIdeas` -- relating ideas (things learned) to one's previous knowledge and experience^2^
+* `RelatingIdeas` -- relating ideas (or things learned) to one's previous knowledge and experience^2^
 * `UseOfEvidence` -- Examining the logic of arguments^1^
-* `LackOfPurpose` -- Not reflecting on purpose or strategies^2^
+* `LackOfPurpose` -- Not reflecting on purpose (why is this or that being done) or strategies^2^
 * `UnrelatedMemorizing` -- Memorising facts and procedures routinely^2^
 * `SyllabusBoundness` --  Concentrating only on what is required for assessment^2^
 * `OrganizedStudying` -- Preparing for classes and how organized is in studies
-* `TimeManagement` -- How good at managing ones time.
+* `TimeManagement` -- How good at managing one's time.
 
 
 ### Data processing
 
-The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 observations remained due to the exclusion of individuals who had zero points from the final exam from not attending it. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named them as above. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale). For the logistic regression, variable `HighPoints` is constructed to be true if the person received more points than the median of the group(23). 
+The original data set consisted of 183 observations, but after [processing it](https://raw.githubusercontent.com/Riku-Laine/IODS-final/master/data/createLearningFP.R) only 166 observations remained due to the exclusion of individuals who had zero points from the final exam from not attending it. Processing the data, I constructed the variables for e.g. use of evidence and seeking meaning by the instructions in the [meta page](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt) and named them as above. For instance, `SeekingMeaning` is the mean for the answers D03, D11, D19 and D27 which were answered in the 5-point [Likert scale](https://en.wikipedia.org/wiki/Likert_scale). 
+
+For the logistic regression, variable `HighPoints` is constructed to be true if the person received more points than the median of the group (23). 
 
 ### The data visually
 
@@ -314,7 +318,7 @@ tableLogReg <- cbind(tableLogReg, `P-value` = round(summary(model)$coefficients[
 kable(tableLogReg, caption = "Table 1: Regression coefficients, 95% confidence intervals and p-values")
 ```
 
-```{r}
+```{r, fig.asp=.5}
 p3 <- ggplot(learning2014, aes(x=HighPoints, y=Attitude))+
 	geom_boxplot()+ylim(10,50)+
 	geom_jitter(position=position_jitter(0.1), alpha=.4)+ggtitle("", subtitle = "Fig. 6 HighPoints and Attitude")
@@ -332,16 +336,16 @@ As negative results it can be noted that for instance gender and age had no effe
 
 For validation analysis, I will perform likelihood ratio tests to see if a reduced model would be more suitable to model the exam scores and in addition i will cross tabulate the predicted values of our model to the actual to see the predictive power of it.
 
-Initially our model was called in form `HighPoints ~ Gender + Age + Attitude + SeekingMeaning + RelatingIdeas + UseOfEvidence + LackOfPurpose + UnrelatedMemorising + SyllabusBoundness +  OrganizedStudying + TimeManagement`, but in the summary of the formula it was seen that some of the arguments, especially Gender, Age and SeekingMeaning weren't at all significant so I removed them from the model and constructed `model2` which I proceeded to test against the first model with a likelihood ratio test. As seen below, the test returned non-significant ($p > 0.05$) so those variables were non-significant, although it wouldn't effect the output of the model. After brief exploration it in the sense of likelihood ratio test there was no significant differences in between model with all variables and the model with only `Attitude`, `RelatingIdeas` and `TimeManagement`.
+Initially our model was called in form *HighPoints ~ Gender + Age + Attitude + SeekingMeaning + RelatingIdeas + UseOfEvidence + LackOfPurpose + UnrelatedMemorising + SyllabusBoundness +  OrganizedStudying + TimeManagement*, but in the summary of the formula it was seen that some of the arguments, especially Gender, Age and SeekingMeaning weren't at all significant so I removed them from the model and constructed another which I proceeded to test against the first model with a likelihood ratio test. The test returned non-significant ($p > 0.05$) so those variables were non-significant for our model. After a brief exploration, it occurred that there were no significant differences in between models with all variables and the model with only `Attitude`, `RelatingIdeas` and `TimeManagement` as seen below.
+
+
 
 ```{r}
-model2 <- glm(HighPoints ~ Attitude + RelatingIdeas+ TimeManagement, data = learning2014, family = "binomial")
+model2 <- glm(HighPoints ~ Attitude + RelatingIdeas + TimeManagement, data = learning2014, family = "binomial")
 anova(model, model2, test = "LRT")
-anova(model, test = "LRT")
-summary(model2)
 ```
 
-Below is also a similar validation analysis which was done in DataCamp. First we predicted the values of HighPoints and the cross tabulated them with the actual values. So it was concluded that our model predicted success approximately 73% right.  There were a total of 45 miss-predictions, but partly they might have arisen from the fact that there were 13 students with the median score 23. all in all there were 34 students in one-point radius from the median (meaning [22,24]).
+Below is also a similar validation analysis which was done in DataCamp. First we predicted the values of HighPoints and the cross tabulated them with the actual values. So it was concluded that our model predicted success approximately 73% right.  There were a total of 45 miss-predictions, but partly they might have arisen from the fact that there were 13 students with the median score 23. All in all there were 34 students in one-point radius from the median (meaning [22,24]).
 
 ```{r}
 # predict the probability
@@ -357,6 +361,12 @@ table(HighPoints = learning2014$HighPoints, Prediction = learning2014$prediction
 
 ## Conclusions and discussion
 
-Form this it an be concluded that 'paejb
-PBNAT'P'GRJ
-PEorjg'petjg'paejt'tgja
+Reflecting the original hypothesis, it can be concluded that attitude has a significant effect on the final results. Thinking about relating ideas didn't have a significant effect but it had a p-value of approximately 0.067 and an OR estimate of 0.54 suggesting that connecting the learned to one's previous knowledge would deteriorate the learning results.
+
+TimeManagement arose as an unprecedented effect. It had the second most significant effect on exam scores. Although if you read the [scoring key](http://www.etl.tla.ed.ac.uk/questionnaires/scoringkey.pdf), you see that time management has answers such as *I’m pretty good at getting down to work whenever I need to* and * I work steadily during the course, rather than just leaving things until the last minute*. The questions might imply to answer regarding only the specific course and thereby have some correlation to motivation which would then affect the final score. This theory has some basis when looking at Figure 8: the ones with high points seem to be in the top right corner of the plot with high time management skills and good attitude, as the ones with bad attitude, poor time management and low score fall in the lower left corner of the plot.
+
+```{r}
+ggplot(learning2014, aes(x=TimeManagement, y=Attitude))+geom_jitter(aes(col=HighPoints))+ggtitle("Fig. 8: Attitude and TimeManagement association with HighPoints")
+```
+
+A better suiting model could have been chosen for the analysis. Perhaps some regular general linear model would have been more fitting, so that we could have gotten more power out of our continuous response variable. Due to the lack of my time I didn't perform cross validation but it would have been a nice touch in the assertation of the model.

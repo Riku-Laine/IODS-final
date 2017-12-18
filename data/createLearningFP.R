@@ -52,6 +52,9 @@ detach(learning2014)
 # Omit observations which had zero points from the final exam.
 an.data <- an.data[an.data$Points!=0,]
 
+# Create binarized variable for logistic regression
+an.data$HighPoints <- an.data$Points > median(an.data$Points)
+
 # Fix the first column name to be upper case as the others.
 colnames(an.data)[1] <- "Gender"
 

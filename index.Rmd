@@ -219,14 +219,12 @@ The original data set consisted of 183 observations, but after [processing it](h
 
 ### The data visually
 
-*Visually clear and interesting explorations of the variables of interest in the data, from the point of view of your research question. Include interpretations of the distributions and relationships of the variables. Use captions to draw the reader’s focus on the interesting parts of your tables and graphics.*
-
 First I explored the data with a paired plot matrix to see possible trends and correlations between the variables of the data. Afterwards, I deepened my analysis with some variables of interest revealed by the plot matrix.
 
 ```{r Plots}
 learning2014 <- read.csv("~/GitHub/IODS-final/data/learning2014.csv")
 
-ggpairs(learning2014, mapping = aes(col=Gender, alpha=0.1), lower = list(combo = wrap("facethist", bins = 20)),  upper = list(continuous = wrap(size = 1.7, mycor, sgnf=2)))+
+ggpairs(learning2014[,-13], mapping = aes(col=Gender, alpha=0.1), lower = list(combo = wrap("facethist", bins = 20)),  upper = list(continuous = wrap(size = 1.7, mycor, sgnf=2)))+
 	theme(strip.text = element_text(size=6), 
 				strip.text.y = element_text(angle=0), 
 				axis.text = element_text(size=6), 
@@ -239,7 +237,7 @@ Distributions of the variables seem to be quite symmetrical, although most of th
 From figure 1 above it is visible that there are some quite strong correlations with some of the variables. For instance the variables of deep learning `OrganizedStudying` and `TimeManagement` have a correlation coefficient of $\rho \approx 0,7$ as the attitude of a student correlates with their points with a coefficient $\rho \approx 0,43$. Correlations are analyzed more thoroughly below figure 2.
 
 ```{r Corrplot, out.height="80%", out.width="80%"}
-corrplot(cor(learning2014[, -1]), type = "lower", diag = T, tl.col='black', tl.srt = 0.1, tl.offset = 1, 
+corrplot(cor(learning2014[, -c(1, 13)]), type = "lower", diag = T, tl.col='black', tl.srt = 0.1, tl.offset = 1, 
 				 title = "Fig. 2: Correlations of learning2014 data")
 ```
 
@@ -261,15 +259,15 @@ p2 <- ggplot(learning2014, aes(x=Gender, y=OrganizedStudying, fill=Gender))+
 multiplot(p1, p2, cols=2)
 ```
 
-It can be seen that men have higher attitude points, which is supported by Mann-Whitney U-test ($p \approx 1.1 \cdot 10^{-4}$). Females seem to be more organized (Mann-Whitney U, $p \approx 7.1 \cdot 10^{-3}$) in a statistically significant quantity. These differences have been noted in previous studies **JATKA**
+It can be seen that men have higher attitude points, which is supported by Mann-Whitney U-test ($p \approx 1.1 \cdot 10^{-4}$). Females seem to be more organized (Mann-Whitney U, $p \approx 7.1 \cdot 10^{-3}$) in a statistically significant quantity. These differences have been noted in previous studies.
 
 ## Methods
 
 ### Logistic regression
 
-As [NCBI](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1065119/) puts it, logistic regression, "is a method for modelling the dependence of a binary response variable on one or more explanatory variables." In our case we have the binary response variable of points gotten in the final exam; if one has a score higher than **PÄÄTÄÄTTÄTÄ** they will have 1, as ones with a lower score get a zero. The regression model attempts to estimate the dependent variable in the best fashion. 
+As [NCBI](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1065119/) puts it, logistic regression "is a method for modelling the dependence of a binary response variable on one or more explanatory variables." In our case we have the binary response variable of points gotten in the final exam; if one has a score higher than the median of points (23) they will have 1, as ones with a lower score get a zero. The regression model then attempts to estimate the dependent variable in the best fashion. 
 
-Log odds 
+The model offers the quantitities of the effects as log odds. Log odds
 
 ### Other statistical tests used
 
@@ -277,7 +275,7 @@ Log odds
 
 Mann-Whitney U-test is a non-parametric alternative for the t-test. In other words, we do not have the assume that our variables are normally distributed. The test allows us to test "the null hypothesis that it is equally likely that a randomly selected value from one sample will be less than or greater than a randomly selected value from a second sample" ([Wikipedia](https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test)). Fig. 5 shows that the distributions are quite normal in `Attitude` but it has been shown that Mann-Whitney doesn't lose its statistical power compared to the t-test in such a quantity it would be beneficial to risk on the normality assumption.
 
-```{r}
+```{r, fig.align='center', out.height="50%"}
 plot(density(learning2014$Attitude[learning2014$Gender=='M']), col='blue', main="Figure 5: Distribution of Attitude by gender", xlab="Attitude points")
 lines(density(learning2014$Attitude[learning2014$Gender=='F']), col='red')
 legend("topright", col=c("red", "blue"), legend = c('Female', 'Male'), lty=1)
@@ -286,6 +284,17 @@ legend("topright", col=c("red", "blue"), legend = c('Female', 'Male'), lty=1)
 
 
 ## Results
+
+```{r }
+model <- glm(HighPoints ~ Gender + Age + Attitude + SeekingMeaning + RelatingIdeas + UseOfEvidence + LackOfPurpose + UnrelatedMemorising + SyllabusBoundness + OrganizedStudying + TimeManagement, data = learning2014, family = "binomial")
+summary(model)
+
+# uusi malli ilman attitudea
+
+# 
+
+```
+
 
 ### Summaries and visualizations
 

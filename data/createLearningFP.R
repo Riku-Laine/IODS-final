@@ -1,5 +1,5 @@
 # Author: Riku Laine
-# Email: riku.laine@helsinki.fi
+# Email: riku.laine[at]helsinki.fi
 # Date: Mon Dec 11 13:43:43 2017
 # Project name: IODS final project - Data wrangling
 # Description

@@ -3,7 +3,6 @@
 title: "IODS final project"
 author:
   name: Riku Laine
-  affiliation: riku.laine[at]helsinki.fi
 output:
   html_document:
     theme: flatly
